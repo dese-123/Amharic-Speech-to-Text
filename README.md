@@ -11,7 +11,7 @@ Steps
 
 Clone or download the project:
 
-git clone https://github.com/yourusername/amharic-speech-to-text.git
+[git clone https://github.com/yourusername/amharic-speech-to-text.git](https://github.com/dese-123/Amharic-Speech-to-Text/settings/pages)
 
 
 Open index.html in your browser
