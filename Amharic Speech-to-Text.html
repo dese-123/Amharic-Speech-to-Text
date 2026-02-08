@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amharic Speech-to-Text Converter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0d5c63 0%, #44a08d 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        header {
+            background-color: #2a7a6d;
+            color: white;
+            padding: 25px 30px;
+            text-align: center;
+            position: relative;
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        header h1 i {
+            font-size: 2.2rem;
+        }
+        
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .amharic-title {
+            font-family: 'Abyssinica SIL', 'Segoe UI', sans-serif;
+            font-size: 2.8rem;
+            color: #ffcc00;
+            margin-top: 10px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+        }
+        
+        .status-panel {
+            background-color: #f0f9f7;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 5px solid #2a7a6d;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .status-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2a7a6d;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .status-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #ddd;
+        }
+        
+        .status-dot.active {
+            background-color: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+        
+        .status-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .recording-status {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #e74c3c;
+            display: none;
+        }
+        
+        .recording-status.active {
+            display: block;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-start {
+            background-color: #2a7a6d;
+            color: white;
+        }
+        
+        .btn-stop {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-clear {
+            background-color: #f39c12;
+            color: white;
+        }
+        
+        .btn-copy {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .transcription-panel {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 25px;
+        }
+        
+        .transcription-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .transcription-header h2 {
+            color: #2a7a6d;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .transcription-container {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            min-height: 300px;
+            padding: 20px;
+            font-size: 1.2rem;
+            line-height: 1.6;
+            background-color: #f9f9f9;
+            overflow-y: auto;
+            font-family: 'Abyssinica SIL', 'Segoe UI', sans-serif;
+            direction: ltr;
+            text-align: left;
+        }
+        
+        .placeholder-text {
+            color: #999;
+            font-style: italic;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .instructions {
+            background-color: #f0f9f7;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+        
+        .instructions h3 {
+            color: #2a7a6d;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-size: 0.95rem;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            background-color: #f9f9f9;
+        }
+        
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            .amharic-title {
+                font-size: 2.2rem;
+            }
+            
+            .btn {
+                padding: 12px 20px;
+                font-size: 1rem;
+            }
+            
+            .controls {
+                gap: 10px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        .transcribed-text {
+            font-size: 1.3rem;
+            line-height: 1.8;
+            min-height: 50px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .language-note {
+            background-color: #e8f4fc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            font-size: 0.95rem;
+            color: #2c3e50;
+            border-left: 4px solid #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-microphone-alt"></i> Amharic Speech-to-Text</h1>
+            <div class="amharic-title">አማርኛ ንግግር ወደ ጽሑፍ</div>
+            <p>Convert spoken Amharic language into text directly in your browser. No installation required.</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="status-panel">
+                <div class="status-title">
+                    <i class="fas fa-info-circle"></i> Status
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <div class="status-text" id="statusText">Click "Start Recording" to begin</div>
+                </div>
+                <div class="recording-status" id="recordingStatus">
+                    <i class="fas fa-circle"></i> Recording Amharic speech...
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-start" id="startBtn">
+                    <i class="fas fa-microphone"></i> Start Recording
+                </button>
+                <button class="btn btn-stop" id="stopBtn" disabled>
+                    <i class="fas fa-stop"></i> Stop Recording
+                </button>
+                <button class="btn btn-clear" id="clearBtn">
+                    <i class="fas fa-eraser"></i> Clear Text
+                </button>
+                <button class="btn btn-copy" id="copyBtn">
+                    <i class="fas fa-copy"></i> Copy Text
+                </button>
+            </div>
+            
+            <div class="transcription-panel">
+                <div class="transcription-header">
+                    <h2><i class="fas fa-file-alt"></i> Amharic Transcription</h2>
+                    <div id="wordCount">Words: 0</div>
+                </div>
+                <div class="transcription-container" id="transcriptionContainer">
+                    <div class="placeholder-text" id="placeholderText">
+                        Your Amharic transcription will appear here. Click "Start Recording" to begin.
+                    </div>
+                    <div class="transcribed-text" id="transcribedText"></div>
+                </div>
+            </div>
+            
+            <div class="language-note">
+                <i class="fas fa-language"></i> <strong>Note:</strong> This application uses your browser's speech recognition capabilities. For best results with Amharic, speak clearly and ensure your browser supports speech recognition.
+            </div>
+            
+            <div class="instructions">
+                <h3><i class="fas fa-list-ol"></i> How to Use</h3>
+                <ol>
+                    <li>Click the <strong>"Start Recording"</strong> button to begin speech recognition.</li>
+                    <li>Speak clearly in Amharic. The application will convert your speech to text.</li>
+                    <li>Click <strong>"Stop Recording"</strong> when you're finished speaking.</li>
+                    <li>Use <strong>"Clear Text"</strong> to erase the transcription or <strong>"Copy Text"</strong> to copy it to your clipboard.</li>
+                    <li>For best results, use a quiet environment and speak at a moderate pace.</li>
+                </ol>
+                <div class="note">
+                    <i class="fas fa-exclamation-circle"></i> <strong>Browser Support:</strong> Speech recognition works best in Chrome and Edge. Safari and Firefox may have limited support.
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Amharic Speech-to-Text Converter | Built with HTML, CSS & JavaScript</p>
+            <p>Note: This is a demonstration application. For production use, consider using specialized Amharic speech recognition APIs.</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const transcribedText = document.getElementById('transcribedText');
+        const placeholderText = document.getElementById('placeholderText');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const recordingStatus = document.getElementById('recordingStatus');
+        const wordCount = document.getElementById('wordCount');
+        
+        // Speech recognition variables
+        let recognition;
+        let isRecognizing = false;
+        let finalTranscript = '';
+        
+        // Check for browser support
+        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!window.SpeechRecognition) {
+            statusText.textContent = "Speech recognition not supported in this browser. Try Chrome or Edge.";
+            startBtn.disabled = true;
+            statusDot.style.backgroundColor = "#e74c3c";
+        } else {
+            // Initialize speech recognition
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'am-ET'; // Amharic (Ethiopia)
+            
+            // Speech recognition event handlers
+            recognition.onstart = function() {
+                isRecognizing = true;
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                statusDot.classList.add('active');
+                statusText.textContent = "Speech recognition active";
+                recordingStatus.classList.add('active');
+                placeholderText.style.display = 'none';
+            };
+            
+            recognition.onresult = function(event) {
+                let interimTranscript = '';
+                
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript + ' ';
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+                
+                // Update the displayed text
+                const displayText = finalTranscript + (interimTranscript ? `<span style="color:#777">${interimTranscript}</span>` : '');
+                transcribedText.innerHTML = displayText;
+                
+                // Update word count
+                updateWordCount();
+                
+                // Scroll to bottom of transcription container
+                const container = document.getElementById('transcriptionContainer');
+                container.scrollTop = container.scrollHeight;
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error', event.error);
+                
+                if (event.error === 'no-speech') {
+                    statusText.textContent = "No speech detected. Please try again.";
+                } else if (event.error === 'audio-capture') {
+                    statusText.textContent = "No microphone found. Please check your microphone.";
+                } else if (event.error === 'not-allowed') {
+                    statusText.textContent = "Microphone access denied. Please allow microphone access.";
+                } else {
+                    statusText.textContent = "Error occurred in recognition: " + event.error;
+                }
+                
+                resetRecognition();
+            };
+            
+            recognition.onend = function() {
+                resetRecognition();
+            };
+        }
+        
+        // Function to reset recognition state
+        function resetRecognition() {
+            isRecognizing = false;
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            statusDot.classList.remove('active');
+            statusText.textContent = "Ready to record";
+            recordingStatus.classList.remove('active');
+        }
+        
+        // Function to update word count
+        function updateWordCount() {
+            const text = finalTranscript + transcribedText.textContent;
+            const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+            wordCount.textContent = `Words: ${words.length}`;
+        }
+        
+        // Event Listeners
+        startBtn.addEventListener('click', function() {
+            if (!isRecognizing) {
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.error('Error starting recognition:', error);
+                    statusText.textContent = "Error starting speech recognition. Please refresh the page.";
+                }
+            }
+        });
+        
+        stopBtn.addEventListener('click', function() {
+            if (isRecognizing) {
+                recognition.stop();
+            }
+        });
+        
+        clearBtn.addEventListener('click', function() {
+            finalTranscript = '';
+            transcribedText.textContent = '';
+            placeholderText.style.display = 'block';
+            updateWordCount();
+        });
+        
+        copyBtn.addEventListener('click', function() {
+            const textToCopy = transcribedText.textContent || finalTranscript;
+            
+            if (!textToCopy.trim()) {
+                alert("No text to copy. Please record some speech first.");
+                return;
+            }
+            
+            // Use the Clipboard API if available
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textToCopy)
+                    .then(() => {
+                        // Show a temporary confirmation
+                        const originalText = copyBtn.innerHTML;
+                        copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = originalText;
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy: ', err);
+                        alert("Failed to copy text. Please try again.");
+                    });
+            } else {
+                // Fallback method for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                // Show a temporary confirmation
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                }, 2000);
+            }
+        });
+        
+        // Add some sample Amharic text for demonstration
+        window.addEventListener('DOMContentLoaded', function() {
+            // This is just for demonstration - in a real app, this would come from speech recognition
+            // Sample Amharic phrases
+            const sampleAmharic = "ይህ የአማርኛ ንግግር ወደ ጽሑፍ መለወጫ ነው። ንግግርዎን ለመቅዳት መቀስቀሻውን ይጫኑ።";
+            
+            // Uncomment the line below to show sample text on load for demonstration
+            // transcribedText.textContent = sampleAmharic;
+        });
+    </script>
+</body>
+</html>
